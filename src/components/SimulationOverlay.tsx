@@ -9,16 +9,88 @@ import {
   Radio, 
   Info,
   ChevronLeft,
+  ChevronRight,
   ChevronDown,
   ChevronUp,
   Eye,
   EyeOff,
   Minimize2,
-  Maximize2
+  Maximize2,
+  Mountain,
+  Flame,
+  AlertTriangle,
+  CloudLightning,
+  Zap,
+  Wind
 } from 'lucide-react';
 import { DisasterId } from '../types/disaster';
 import { SIMULATION_SCENARIOS, DISASTERS_DATA } from '../data/disasterData';
 import { soundEngine } from '../audio/soundEngine';
+import type { EruptionStage } from '../scenes/VolcanoScene';
+
+// ── Volcano Eruption Stages Data ──────────────────────────────────────
+const ERUPTION_STAGES = [
+  {
+    id: 'NORMAL',
+    title: 'Gunung Normal',
+    subtitle: 'Fase Dormant',
+    pvmbgLevel: 'Level I — Normal',
+    pvmbgColor: '#22c55e',
+    icon: Mountain,
+    description: 'Gunung api dalam keadaan tenang. Aktivitas vulkanik sangat rendah. Danau kawah stabil dan tidak ada emisi gas berbahaya yang signifikan. Masyarakat dapat beraktivitas normal di sekitar gunung.',
+    visualHint: 'Perhatikan gunung yang tenang — tidak ada asap, lava redup, suasana damai.'
+  },
+  {
+    id: 'UNREST',
+    title: 'Keresahan Vulkanik',
+    subtitle: 'Volcanic Unrest',
+    pvmbgLevel: 'Level II — Waspada',
+    pvmbgColor: '#eab308',
+    icon: AlertTriangle,
+    description: 'Magma mulai bergerak naik dari dapur magma. Terjadi gempa-gempa vulkanik dangkal (tremor). Suhu danau kawah meningkat dan muncul asap solfatara tipis. PVMBG menaikkan status ke Level II Waspada.',
+    visualHint: 'Lihat getaran halus pada gunung dan asap tipis mulai keluar dari kawah.'
+  },
+  {
+    id: 'PHREATIC',
+    title: 'Erupsi Freatik',
+    subtitle: 'Phreatic Eruption',
+    pvmbgLevel: 'Level II — Waspada',
+    pvmbgColor: '#eab308',
+    icon: CloudLightning,
+    description: 'Air tanah bertemu magma panas dan berubah menjadi uap bertekanan tinggi. Ledakan uap menyemburkan material dari kawah tanpa magma baru mencapai permukaan. Kolom abu tipis mulai terlihat.',
+    visualHint: 'Perhatikan semburan abu dari kawah dan zona KRB mulai terlihat.'
+  },
+  {
+    id: 'MAGMATIC_RISE',
+    title: 'Kubah Lava Tumbuh',
+    subtitle: 'Lava Dome Growth',
+    pvmbgLevel: 'Level III — Siaga',
+    pvmbgColor: '#f97316',
+    icon: Flame,
+    description: 'Magma kental (andesit-dasit) mencapai permukaan dan membentuk kubah lava di kawah. Kubah ini sangat tidak stabil — bisa runtuh kapan saja menghasilkan awan panas guguran. Status dinaikkan ke Level III Siaga.',
+    visualHint: 'Kubah lava merah menyala terbentuk di kawah. Asap semakin pekat. Zona KRB aktif!'
+  },
+  {
+    id: 'ERUPTION',
+    title: 'Erupsi Eksplosif',
+    subtitle: 'Klimaks — Plinian Eruption',
+    pvmbgLevel: 'Level IV — Awas',
+    pvmbgColor: '#ef4444',
+    icon: Zap,
+    description: 'LETUSAN BESAR! Kolom erupsi menjulang ke troposfer, awan jamur terbentuk, bom vulkanik terlontar, awan panas (wedhus gembel) menerjang lereng, petir vulkanik menyambar di dalam awan abu. EVAKUASI TOTAL!',
+    visualHint: 'Semua elemen erupsi aktif — kolom abu, awan panas, lava, petir vulkanik!'
+  },
+  {
+    id: 'POST_ERUPTION',
+    title: 'Pasca Erupsi',
+    subtitle: 'Post-Eruption Phase',
+    pvmbgLevel: 'Level III — Siaga',
+    pvmbgColor: '#f97316',
+    icon: Wind,
+    description: 'Aktivitas vulkanik mulai mereda namun ancaman belum berakhir. Hujan abu menutupi wilayah sekitar, lahar dingin mengancam saat hujan. Tim BPBD melaksanakan evakuasi dan operasi penyelamatan korban.',
+    visualHint: 'Abu jatuh dari langit, asap mereda, suasana suram. Posko evakuasi aktif penuh.'
+  },
+];
 
 interface SimulationOverlayProps {
   disasterId: DisasterId;
@@ -27,6 +99,8 @@ interface SimulationOverlayProps {
   onExit: () => void;
   onAddXp: (amount: number) => void;
   onOpenDetails: () => void;
+  volcanoStage?: EruptionStage;
+  onSetVolcanoStage?: (stage: EruptionStage) => void;
 }
 
 export const SimulationOverlay: React.FC<SimulationOverlayProps> = ({
@@ -35,7 +109,9 @@ export const SimulationOverlay: React.FC<SimulationOverlayProps> = ({
   onToggleSimulate,
   onExit,
   onAddXp,
-  onOpenDetails
+  onOpenDetails,
+  volcanoStage,
+  onSetVolcanoStage
 }) => {
   const scenario = SIMULATION_SCENARIOS[disasterId];
   const data = DISASTERS_DATA[disasterId];
@@ -96,6 +172,22 @@ export const SimulationOverlay: React.FC<SimulationOverlayProps> = ({
 
   const selectedOption = currentStep?.options.find(o => o.id === selectedOptionId);
 
+  // Volcano Stage Navigation Handlers
+  const isVolcano = disasterId === 'VOLCANO' && volcanoStage !== undefined && onSetVolcanoStage;
+  const currentVolcanoStageData = isVolcano ? ERUPTION_STAGES[volcanoStage!] : null;
+
+  const handleVolcanoPrev = () => {
+    if (!isVolcano || volcanoStage === undefined || volcanoStage <= 0) return;
+    soundEngine.playClick();
+    onSetVolcanoStage!((volcanoStage - 1) as EruptionStage);
+  };
+
+  const handleVolcanoNext = () => {
+    if (!isVolcano || volcanoStage === undefined || volcanoStage >= 5) return;
+    soundEngine.playClick();
+    onSetVolcanoStage!((volcanoStage + 1) as EruptionStage);
+  };
+
   return (
     <div className="absolute inset-0 pointer-events-none p-4 sm:p-6 z-20 overflow-hidden">
       
@@ -114,9 +206,11 @@ export const SimulationOverlay: React.FC<SimulationOverlayProps> = ({
         {/* Hazard Level Badge */}
         <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-2xl bg-slate-900/85 border border-slate-700/80 backdrop-blur-md shadow-2xl">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full animate-ping" style={{ backgroundColor: data.color }} />
+            <span className="w-2.5 h-2.5 rounded-full animate-ping" style={{ backgroundColor: isVolcano && currentVolcanoStageData ? currentVolcanoStageData.pvmbgColor : data.color }} />
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">
-              STATUS: <span style={{ color: data.color }}>{scenario.hazardLevel}</span>
+              STATUS: <span style={{ color: isVolcano && currentVolcanoStageData ? currentVolcanoStageData.pvmbgColor : data.color }}>
+                {isVolcano && currentVolcanoStageData ? currentVolcanoStageData.pvmbgLevel : scenario.hazardLevel}
+              </span>
             </span>
           </div>
           <span className="text-slate-600">|</span>
@@ -170,8 +264,144 @@ export const SimulationOverlay: React.FC<SimulationOverlayProps> = ({
         </div>
       </div>
 
-      {/* Bottom Floating Card Dock - Placed at bottom-right so it NEVER blocks the 3D center */}
-      <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 w-[calc(100%-2rem)] sm:w-auto sm:max-w-md md:max-w-lg z-30 pointer-events-auto">
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* VOLCANO ERUPTION STAGE NAVIGATOR — Bottom Left Panel              */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {isVolcano && currentVolcanoStageData && (
+        <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 w-[calc(100%-2rem)] sm:w-auto sm:max-w-[420px] z-30 pointer-events-auto">
+          <div className="bg-slate-900/92 border border-slate-700/80 rounded-3xl shadow-2xl backdrop-blur-xl overflow-hidden">
+            
+            {/* Stage Header with PVMBG Badge */}
+            <div className="px-5 pt-4 pb-3">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  {/* Stage Icon */}
+                  <div 
+                    className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+                    style={{ 
+                      backgroundColor: `${currentVolcanoStageData.pvmbgColor}18`, 
+                      border: `1.5px solid ${currentVolcanoStageData.pvmbgColor}60`,
+                      boxShadow: `0 0 18px ${currentVolcanoStageData.pvmbgColor}25`
+                    }}
+                  >
+                    {React.createElement(currentVolcanoStageData.icon, { 
+                      className: 'w-5 h-5',
+                      style: { color: currentVolcanoStageData.pvmbgColor }
+                    })}
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                      Tahap {volcanoStage! + 1} dari 6
+                    </div>
+                    <h4 className="text-sm font-black text-white leading-tight">
+                      {currentVolcanoStageData.title}
+                    </h4>
+                  </div>
+                </div>
+
+                {/* PVMBG Status Badge */}
+                <div 
+                  className="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider border whitespace-nowrap"
+                  style={{ 
+                    backgroundColor: `${currentVolcanoStageData.pvmbgColor}15`,
+                    borderColor: `${currentVolcanoStageData.pvmbgColor}50`,
+                    color: currentVolcanoStageData.pvmbgColor,
+                    boxShadow: `0 0 12px ${currentVolcanoStageData.pvmbgColor}20`
+                  }}
+                >
+                  {currentVolcanoStageData.pvmbgLevel}
+                </div>
+              </div>
+
+              {/* Stage Subtitle */}
+              <div className="text-[11px] font-semibold text-slate-400 italic mb-2.5">
+                {currentVolcanoStageData.subtitle}
+              </div>
+
+              {/* Description */}
+              <p className="text-[11.5px] text-slate-300 leading-relaxed bg-slate-800/50 p-3 rounded-xl border border-slate-700/60 mb-3">
+                {currentVolcanoStageData.description}
+              </p>
+
+              {/* Visual Hint */}
+              <div className="flex items-start gap-2 text-[10.5px] text-cyan-400/80 mb-1">
+                <Eye className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <span className="leading-snug italic">{currentVolcanoStageData.visualHint}</span>
+              </div>
+            </div>
+
+            {/* ── Progress Dots & Navigation Buttons ── */}
+            <div className="px-5 pb-4 pt-2 border-t border-slate-800/80">
+              <div className="flex items-center justify-between gap-3">
+                
+                {/* Previous Button */}
+                <button
+                  disabled={volcanoStage === 0}
+                  onClick={handleVolcanoPrev}
+                  className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    volcanoStage === 0
+                      ? 'bg-slate-800/40 text-slate-600 cursor-not-allowed border border-slate-800/40'
+                      : 'bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 hover:border-slate-600 active:scale-95'
+                  }`}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">Sebelumnya</span>
+                </button>
+
+                {/* Progress Dots */}
+                <div className="flex items-center gap-1.5">
+                  {ERUPTION_STAGES.map((stage, idx) => {
+                    const isActive = idx === volcanoStage;
+                    const isPast = idx < volcanoStage!;
+                    return (
+                      <button
+                        key={stage.id}
+                        onClick={() => {
+                          soundEngine.playClick();
+                          onSetVolcanoStage!(idx as EruptionStage);
+                        }}
+                        className={`transition-all duration-300 rounded-full ${
+                          isActive
+                            ? 'w-7 h-2.5 shadow-lg'
+                            : isPast
+                            ? 'w-2.5 h-2.5 opacity-60 hover:opacity-100'
+                            : 'w-2.5 h-2.5 opacity-30 hover:opacity-60'
+                        }`}
+                        style={{ 
+                          backgroundColor: isActive 
+                            ? stage.pvmbgColor 
+                            : isPast 
+                            ? stage.pvmbgColor 
+                            : '#475569',
+                          boxShadow: isActive ? `0 0 10px ${stage.pvmbgColor}60` : 'none'
+                        }}
+                        title={`${stage.title} (Tahap ${idx + 1})`}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Next Button */}
+                <button
+                  disabled={volcanoStage === 5}
+                  onClick={handleVolcanoNext}
+                  className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    volcanoStage === 5
+                      ? 'bg-slate-800/40 text-slate-600 cursor-not-allowed border border-slate-800/40'
+                      : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-md shadow-cyan-600/20 active:scale-95'
+                  }`}
+                >
+                  <span className="hidden sm:inline">Selanjutnya</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Floating Card Dock — Mission Questions Panel (right side) */}
+      <div className={`absolute bottom-4 right-4 sm:bottom-6 sm:right-6 ${isVolcano ? 'w-[calc(50%-1.5rem)] sm:w-auto sm:max-w-sm' : 'w-[calc(100%-2rem)] sm:w-auto sm:max-w-md md:max-w-lg'} z-30 pointer-events-auto`}>
         
         {/* Minimized Pill Bar */}
         {isMinimized ? (
@@ -228,6 +458,14 @@ export const SimulationOverlay: React.FC<SimulationOverlayProps> = ({
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
               <span>Misi: {scenario.objective}</span>
             </div>
+
+            {/* Volcano-specific hint */}
+            {isVolcano && (
+              <div className="text-[11px] text-cyan-300/80 bg-cyan-950/30 p-2.5 rounded-xl border border-cyan-500/20 mb-4 flex items-start gap-2">
+                <Mountain className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <span>Gunakan panel <strong>Tahap Erupsi</strong> di kiri bawah untuk melihat proses gunung meletus secara bertahap.</span>
+              </div>
+            )}
 
             <div className="flex gap-2">
               <button

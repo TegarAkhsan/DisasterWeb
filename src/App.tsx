@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { EruptionStage } from './scenes/VolcanoScene';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import { 
@@ -125,6 +126,7 @@ export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'HOME' | 'MENU' | 'SIMULATION' | 'MAP' | 'CHECKLIST' | 'QUIZ'>('HOME');
   const [activeDisaster, setActiveDisaster] = useState<DisasterId>('EARTHQUAKE');
   const [isSimulating, setIsSimulating] = useState(true);
+  const [volcanoStage, setVolcanoStage] = useState<EruptionStage>(0);
 
   // Modals
   const [selectedDisasterForDetail, setSelectedDisasterForDetail] = useState<DisasterId | null>(null);
@@ -168,6 +170,7 @@ export const App: React.FC = () => {
     setCurrentView('SIMULATION');
     setSelectedDisasterForDetail(null);
     setIsSimulating(true);
+    if (id === 'VOLCANO') setVolcanoStage(0);
   };
 
   const handleStartQuiz = (id: DisasterId | 'ALL') => {
@@ -284,6 +287,7 @@ export const App: React.FC = () => {
           {currentView === 'SIMULATION' && activeDisaster === 'VOLCANO' && (
             <VolcanoScene 
               isSimulating={isSimulating}
+              eruptionStage={volcanoStage}
               onActionClick={(act) => {
                 if (act === 'EVACUATE_KRB') {
                   soundEngine.playCorrect();
@@ -340,6 +344,8 @@ export const App: React.FC = () => {
             onExit={() => setCurrentView('MENU')}
             onAddXp={addXp}
             onOpenDetails={() => setSelectedDisasterForDetail(activeDisaster)}
+            volcanoStage={activeDisaster === 'VOLCANO' ? volcanoStage : undefined}
+            onSetVolcanoStage={activeDisaster === 'VOLCANO' ? setVolcanoStage : undefined}
           />
         )}
       </div>
