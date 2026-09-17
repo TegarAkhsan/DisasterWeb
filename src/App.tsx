@@ -78,9 +78,9 @@ const CameraController: React.FC<{
           controlsRef.current.update();
         }
       } else if (disaster === 'VOLCANO') {
-        camera.position.set(0, 2.5, 9.0);
+        camera.position.set(0, 1.8, 14.0);
         if (controlsRef.current) {
-          controlsRef.current.target.set(0, 0.5, 0);
+          controlsRef.current.target.set(0, 1.8, 0);
           controlsRef.current.update();
         }
       } else if (disaster === 'FLOOD') {
@@ -111,9 +111,10 @@ const CameraController: React.FC<{
     <OrbitControls
       ref={controlsRef}
       enableZoom={view !== 'HOME'}
-      maxDistance={isClassroom ? 6.2 : 15}
-      minDistance={isClassroom ? 2.0 : 3.5}
-      maxPolarAngle={isClassroom ? Math.PI / 2 + 0.05 : Math.PI / 2 + 0.2}
+      maxDistance={isClassroom ? 6.2 : 20}
+      minDistance={isClassroom ? 2.0 : 4.5}
+      maxPolarAngle={isClassroom ? Math.PI / 2 + 0.05 : Math.PI / 2 - 0.04}
+      minPolarAngle={0.1}
       autoRotate={view === 'HOME' && !reducedMotion}
       autoRotateSpeed={0.4}
     />

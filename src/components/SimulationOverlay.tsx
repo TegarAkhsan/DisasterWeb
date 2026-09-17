@@ -78,7 +78,17 @@ const ERUPTION_STAGES = [
     pvmbgColor: '#ef4444',
     icon: Zap,
     description: 'LETUSAN BESAR! Kolom erupsi menjulang ke troposfer, awan jamur terbentuk, bom vulkanik terlontar, awan panas (wedhus gembel) menerjang lereng, petir vulkanik menyambar di dalam awan abu. EVAKUASI TOTAL!',
-    visualHint: 'Semua elemen erupsi aktif — kolom abu, awan panas, lava, petir vulkanik!'
+    visualHint: 'Semua elemen erupsi aktif — kolom abu, awan panas, lava, petir vulkanik di awan abu!'
+  },
+  {
+    id: 'LAVA_FLOW',
+    title: 'Aliran Lava ke Dataran Rendah',
+    subtitle: 'Lava Flow & Lahar',
+    pvmbgLevel: 'Level IV — Awas',
+    pvmbgColor: '#ef4444',
+    icon: Flame,
+    description: 'Lava cair mengalir deras menuruni lereng gunung, membentuk aliran lava (lava flow) yang membakar dan menghancurkan segalanya. Lava mencapai dataran rendah, membakar hutan dan pemukiman. Lahar panas juga mengalir di sepanjang sungai. EVAKUASI TOTAL masih berlaku!',
+    visualHint: 'Lihat sisi kanan gunung — aliran lava merah menyala mengalir jauh ke dataran, membentuk kolam lava di lembah.'
   },
   {
     id: 'POST_ERUPTION',
@@ -87,8 +97,8 @@ const ERUPTION_STAGES = [
     pvmbgLevel: 'Level III — Siaga',
     pvmbgColor: '#f97316',
     icon: Wind,
-    description: 'Aktivitas vulkanik mulai mereda namun ancaman belum berakhir. Hujan abu menutupi wilayah sekitar, lahar dingin mengancam saat hujan. Tim BPBD melaksanakan evakuasi dan operasi penyelamatan korban.',
-    visualHint: 'Abu jatuh dari langit, asap mereda, suasana suram. Posko evakuasi aktif penuh.'
+    description: 'Aktivitas vulkanik mulai mereda namun ancaman belum berakhir. Hujan abu tebal menutupi wilayah sekitar, lahar dingin mengancam saat hujan turun. Tim SAR dan BPBD melaksanakan operasi penyelamatan korban. Korban perlu waspada ancaman gas beracun (SO2, H2S).',
+    visualHint: 'Abu jatuh dari langit, asap mereda, pohon-pohon menghitam tertutup abu. Posko evakuasi aktif penuh.'
   },
 ];
 
@@ -183,7 +193,7 @@ export const SimulationOverlay: React.FC<SimulationOverlayProps> = ({
   };
 
   const handleVolcanoNext = () => {
-    if (!isVolcano || volcanoStage === undefined || volcanoStage >= 5) return;
+    if (!isVolcano || volcanoStage === undefined || volcanoStage >= 6) return;
     soundEngine.playClick();
     onSetVolcanoStage!((volcanoStage + 1) as EruptionStage);
   };
@@ -291,7 +301,7 @@ export const SimulationOverlay: React.FC<SimulationOverlayProps> = ({
                   </div>
                   <div>
                     <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                      Tahap {volcanoStage! + 1} dari 6
+                      Tahap {volcanoStage! + 1} dari 7
                     </div>
                     <h4 className="text-sm font-black text-white leading-tight">
                       {currentVolcanoStageData.title}
@@ -383,10 +393,10 @@ export const SimulationOverlay: React.FC<SimulationOverlayProps> = ({
 
                 {/* Next Button */}
                 <button
-                  disabled={volcanoStage === 5}
+                  disabled={volcanoStage === 6}
                   onClick={handleVolcanoNext}
                   className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                    volcanoStage === 5
+                    volcanoStage === 6
                       ? 'bg-slate-800/40 text-slate-600 cursor-not-allowed border border-slate-800/40'
                       : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-md shadow-cyan-600/20 active:scale-95'
                   }`}
